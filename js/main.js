@@ -38,6 +38,7 @@ const createPokemonCard = (pokemon) => {
  * @param {DOMElement} target DOM Element
  */
 const showListAsCard = (list, target) => {
+    target.innerHTML='';
     list.forEach(pokemon => {
         target.appendChild(createPokemonCard(pokemon));
     })
@@ -47,9 +48,8 @@ const showListAsCard = (list, target) => {
  * 
  * @param {funtion} action //callback when it finish getting data
  */
-const getDiscoveryPokemon = (action) => {
-    const endPoint = basePokeApi + `pokemon?limit=${data.limit}=4&offset=${data.offset}`;
-
+const getDiscoveryPokemon = (endPoint, action) => {
+    
     fetch(endPoint).then(response => response.json()).then(data => {
         action(data);
     }).catch(err => {
@@ -83,15 +83,35 @@ const showDiscover = async () => {
     console.log(pokemons)
     showListAsCard(pokemons, dest);
 }
+const saveDiscoverData = (discover)=>{
+    data.discover=discover;
+    showDiscover();
+}
+const nextDiscoverEvent = () =>{
+    document.querySelector(".discovery-next").addEventListener('click',e=>{
+        e.preventDefault();
+        getDiscoveryPokemon(data.discover.next,saveDiscoverData);
+    })
+}
+const previousDiscoverEvent = () =>{
+    document.querySelector(".discovery-previous").addEventListener('click',e=>{
+        e.preventDefault();
+        getDiscoveryPokemon(data.discover.previous,saveDiscoverData);
+    })
+}
+const addListeners = ()=>{
+    nextDiscoverEvent();
+    previousDiscoverEvent();
+} 
 /**
  * Settings all of nesesary to app work 
  */
 const App = () => {
     console.log('Start App');
-    getDiscoveryPokemon(discover => {
-        data.discover = discover;
-        showDiscover();
-    })
+    addListeners();
+    const endPoint = basePokeApi + `pokemon?limit=${data.limit}=4&offset=${data.offset}`;
+
+    getDiscoveryPokemon(endPoint,saveDiscoverData);
 
 }
 window.onload = App;
