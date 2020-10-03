@@ -1,8 +1,9 @@
 const basePokeApi = 'https://pokeapi.co/api/v2/';
 let data = {
 };
-const saveData = () =>{
-    localStorage.setItem('data',JSON.stringify(data));
+let searchResult = [];
+const saveData = () => {
+    localStorage.setItem('data', JSON.stringify(data));
 }
 /**
  * Creates the structures HTML of a card to show
@@ -178,11 +179,38 @@ const teamListener = () => {
         }
     });
 };
+const searchListener = () => {
+    
+    let searchPanel =  document.querySelector("#search");
+    document.forms.search.addEventListener("submit", (e) => {
+      e.preventDefault();
+      let input = document.forms.search.querySelector("input");
+      fetch(basePokeApi + "pokemon/" +input.value)
+        .then((response) => response.json())
+        .then((sourcePokemon) => {
+          searchPanel.classList.remove("d-none");
+          let pokemon =  createPokemon(sourcePokemon)
+          if (searchResult.findIndex(p => p.name == pokemon.name) < 0) {
+            searchResult.push(pokemon);
+          }
+          showListAsCard(searchResult, document.querySelector(".search-result"))
+        })
+        .catch((err) => {
+          console.log("no se obtuvo pokemon",err);
+        });
+    });
+  
+    searchPanel.querySelector(".close-search").addEventListener('click', e => {
+      searchPanel.classList.add("d-none");
+      searchResult = [];
+    });
+  };
 const addListeners = () => {
     nextDiscoverEvent();
     previousDiscoverEvent();
     favListener();
     teamListener();
+    searchListener();
 }
 /**
  * Settings all of nesesary to app work 
@@ -193,9 +221,9 @@ const App = () => {
         limit: 4,
         favs: [],
         team: [],
-      };
-      (data.offset = Math.floor(Math.random() * 1050) + 1),
-      showListAsCard(data.team, document.querySelector(".Team-result"));
+    };
+    data.offset = Math.floor(Math.random() * 1050) + 1;
+    showListAsCard(data.team, document.querySelector(".Team-result"));
     showListAsCard(data.favs, document.querySelector(".fav-result"));
     addListeners();
     const endPoint = basePokeApi + `pokemon?limit=${data.limit}=4&offset=${data.offset}`;
