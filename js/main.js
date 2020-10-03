@@ -1,11 +1,9 @@
 const basePokeApi = 'https://pokeapi.co/api/v2/';
 let data = {
-    offset: Math.floor(Math.random() * 1050) + 1,
-    limit: 4,
-    favs: [],
-    team: [],
 };
-
+const saveData = () =>{
+    localStorage.setItem('data',JSON.stringify(data));
+}
 /**
  * Creates the structures HTML of a card to show
  * @param {object} pokemon It have the information about pokemon to show
@@ -16,11 +14,11 @@ const createPokemonCard = (pokemon) => {
     wrapper.classList.add('col', 'mb-4');
     const cardImg = pokemon.img || "img/default_thubmnail.png";
     const favColor = data.favs.findIndex((favPokemon) => pokemon.name == favPokemon.name) >= 0
-      ? "text-danger"
-      : "text-secondary";
+        ? "text-danger"
+        : "text-secondary";
     const teamColor = data.team.findIndex((teamPokemon) => pokemon.name == teamPokemon.name) >= 0
-      ? "text-primary"
-      : "text-secondary";  
+        ? "text-primary"
+        : "text-secondary";
     let cardContent = `
     <div class="card">
       <img src="${cardImg}" class="card-img-top" alt="${pokemon.name}">
@@ -30,9 +28,8 @@ const createPokemonCard = (pokemon) => {
       </div>
       <div class="card-footer d-flex">
         <button data-pokemon='${JSON.stringify(pokemon)}'
-            type="button" class="btn btn-light mr-auto fav-pokemon ${
-              pokemon.name
-            }">
+            type="button" class="btn btn-light mr-auto fav-pokemon ${pokemon.name
+        }">
             <i class="fas fa-heart ${favColor} "></i>
         </button>
         <button data-pokemon='${JSON.stringify(pokemon)}'
@@ -127,51 +124,79 @@ const previousDiscoverEvent = () => {
         getDiscoveryPokemon(data.discover.previous, saveDiscoverData);
     })
 }
-const listToggle = (target,list,after)=>{
-    const pokemonToAddORemove=JSON.parse(target.dataset.pokemon);
-    const index =list.findIndex(
-        (pokemon)=>pokemon.name==pokemonToAddORemove.name
+const listToggle = (target, list, after) => {
+    const pokemonToAddORemove = JSON.parse(target.dataset.pokemon);
+    const index = list.findIndex(
+        (pokemon) => pokemon.name == pokemonToAddORemove.name
     );
-    if(index>=0){
-        list.splice(index,1);
-    }else{
+    if (index >= 0) {
+        list.splice(index, 1);
+    } else {
         list.push(pokemonToAddORemove)
     }
-    if(after) after(pokemonToAddORemove);
-        
+    saveData();
+    if (after) after(pokemonToAddORemove);
+
 }
 
 const favListener = () => {
-    document.addEventListener('click', e => {
-        const target = e.target;
-        if (target.classList.contains("fav-pokemon")) {
+    document.addEventListener("click", (e) => {
+        let target = e.target;
+        if (
+            target.classList.contains("fav-pokemon") ||
+            target.parentElement.classList.contains("fav-pokemon")
+        ) {
+            target = target.dataset.pokemon ? target : target.parentElement;
             listToggle(target, data.favs, (pokemon) => {
-                showListAsCard(data.favs,document.querySelector(".fav-result"));
-            })
+                document
+                    .querySelectorAll(".fav-pokemon." + pokemon.name)
+                    .forEach((favs) => {
+                        const i = favs.querySelector("i");
+                        i.classList.toggle("text-danger");
+                        i.classList.toggle("text-secondary");
+                    });
+                showListAsCard(data.favs, document.querySelector(".fav-result"));
+            });
         }
-    })
-}
+    });
+};
 const teamListener = () => {
-    document.addEventListener('click', e => {
-        const target = e.target;
-        if (target.classList.contains("team-pokemon")) {
-            listToggle(target, data.teams, (pokemon) => {
-                console.log("remonve", pokemon);
-            })
+    document.addEventListener("click", (e) => {
+        let target = e.target;
+        if (target.classList.contains("team-pokemon") || target.parentElement.classList.contains("team-pokemon")) {
+            target = target.dataset.pokemon ? target : target.parentElement;
+            listToggle(target, data.team, (pokemon) => {
+                document
+                    .querySelectorAll(".team-pokemon." + pokemon.name)
+                    .forEach((favs) => {
+                        const i = favs.querySelector("i");
+                        i.classList.toggle("text-primary");
+                        i.classList.toggle("text-secondary");
+                    });
+                showListAsCard(data.team, document.querySelector(".Team-result"));
+            });
         }
-    })
-}
+    });
+};
 const addListeners = () => {
     nextDiscoverEvent();
     previousDiscoverEvent();
     favListener();
-  teamListener();
+    teamListener();
 }
 /**
  * Settings all of nesesary to app work 
  */
 const App = () => {
     console.log('Start App');
+    data = JSON.parse(localStorage.getItem("data")) || {
+        limit: 4,
+        favs: [],
+        team: [],
+      };
+      (data.offset = Math.floor(Math.random() * 1050) + 1),
+      showListAsCard(data.team, document.querySelector(".Team-result"));
+    showListAsCard(data.favs, document.querySelector(".fav-result"));
     addListeners();
     const endPoint = basePokeApi + `pokemon?limit=${data.limit}=4&offset=${data.offset}`;
 
